@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="ChinookExplorer.Cli/ChinookExplorer.Cli.csproj" DisplayName="ChinookExplorer.Cli" />
+  <Project Path="ChinookExplorer.Data/ChinookExplorer.Data.csproj" Id="4c522cf2-2a33-4f4a-9880-9d602e80045d" />
+  <Project Path="ChinookExplorer.Tests/ChinookExplorer.Tests.csproj" Id="bf21932e-25de-4bcb-922d-0aa6c798599c" />
+</Solution>
