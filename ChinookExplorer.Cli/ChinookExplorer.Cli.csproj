@@ -18,4 +18,13 @@
     </PackageReference>
   </ItemGroup>
 
+	<ItemGroup>
+		<None Include="..\database\Chinook_Sqlite.sqlite" Link="database\Chinook_Sqlite.sqlite" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Renderer\" />
+	  <Folder Include="Renderer\" />
+	</ItemGroup>
+
 </Project>
