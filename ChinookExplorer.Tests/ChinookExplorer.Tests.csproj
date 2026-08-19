@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ChinookExplorer.Data\ChinookExplorer.Data.csproj" />
+    <ProjectReference Include="..\ChinookExplorer.Cli\ChinookExplorer.Cli.csproj" />
   </ItemGroup>
 
   <ItemGroup>
