@@ -2,16 +2,26 @@
 
 namespace ChinookExplorer.Cli.Renderer
 {
-    readonly record struct Row(int Id, IReadOnlyList<string> Cells);
-    record ArtistRow(int Id, string Artist);
-    record AlbumRow(int Id, string Album);
-    record TrackRow(int Id, string Track, string Composer, string Length);
+    readonly record struct Duration(int Ms)
+    {
+        public override string ToString() => $"{Ms / 60000}:{Ms / 1000 % 60:D2}";
+    }
+
+    abstract record ViewRow
+    {
+        private ViewRow() { }
+        public sealed record ArtistRow(int ArtistId, string Name) : ViewRow;
+        public sealed record AlbumRow(int AlbumId, string Title) : ViewRow;
+        public sealed record TrackRow(int TrackId, string Name, string Composer, Duration Duration) : ViewRow;
+    }
 
     class RenderTerminal
     {
-        internal void Table<T>(IReadOnlyList<T> rows, string prompt)
+        internal void Table<T>(IReadOnlyList<T> rows, string tableStart, string promptAsk) where T : ViewRow
         {
-            if (rows.Count == 0) { WriteLine("Nothing to show."); return; }
+            WriteLine(tableStart);
+
+            if (rows.Count == 0) { WriteLine("Nothing to show. Press any key to go back."); return; }
 
             var props = typeof(T).GetProperties();
 
@@ -31,7 +41,7 @@ namespace ChinookExplorer.Cli.Renderer
             foreach (var g in grid)
                 WriteLine(string.Join("  ", g.Select((c, i) => c.PadRight(widths[i]))));
 
-            Write(prompt);
+            Write(promptAsk + " or press Backspace to go back:");
         }
 
         internal void StartScreen()
@@ -46,25 +56,13 @@ namespace ChinookExplorer.Cli.Renderer
             Write("Write your option: ");
         }
 
-        internal void ArtistsScreen(List<Row> artists)
-        {
-            WriteLine($"ArtistsScreen Start");
-            WriteLine(new string('-', 45));
-            foreach (var artist in artists)
-            {
-                //WriteLine($"{artist.Id,-5} {artist.Label}");
-            }
-            Write("ArtistsScreen End");
-        }
+        internal void Artists(IReadOnlyList<ViewRow.ArtistRow> artists) => 
+            Table(artists, "Artists", "Write your option");
 
-        internal void ArtistAlbumsScreen(List<Row> albums)
-        {
-            Clear();
-        }
+        internal void ArtistAlbums(IReadOnlyList<ViewRow.AlbumRow> albums) => 
+            Table(albums, "Artist's Albums", "Write your option");
 
-        internal void AlbumTracksScreen(int id)
-        {
-            Clear();
-        }
+        internal void AlbumTracks(IReadOnlyList<ViewRow.TrackRow> tracks) => 
+            Table(tracks, "Album Tracks", "Write your option");
     }
 }

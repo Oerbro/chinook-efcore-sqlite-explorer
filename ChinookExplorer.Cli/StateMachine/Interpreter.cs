@@ -12,7 +12,7 @@ namespace ChinookExplorer.Cli.StateMachine
                 (_, Command.Quit _) =>
                     (LoopSignal.Exit, screen),
 
-                (Screen.StartScreen, Command.Next) =>
+                (Screen.StartScreen, Command.Select(1)) =>
                     (LoopSignal.Continue, new Screen.ArtistsScreen(1)),
 
                 (Screen.ArtistsScreen artists, Command.Next)
