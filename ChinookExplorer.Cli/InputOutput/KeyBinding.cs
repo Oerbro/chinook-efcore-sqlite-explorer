@@ -4,22 +4,14 @@ namespace ChinookExplorer.Cli.InputOutput
 {
     static class KeyBinding
     {
-        public static Command? MakeCommand(ConsoleKeyInfo key, int? selectedId)
+        public static Command? MakeCommand(string? line) => line?.Trim().ToLowerInvariant() switch
         {
-            return key.Key switch
-            {
-                ConsoleKey.LeftArrow =>
-                    new Command.Previous(),
-                ConsoleKey.RightArrow =>
-                    new Command.Next(),
-                ConsoleKey.Enter when selectedId is int id =>
-                    new Command.Select(id),
-                ConsoleKey.Backspace =>
-                    new Command.Back(),
-                ConsoleKey.Q =>
-                    new Command.Quit(),
-                _ => null
-            };
-        }
+            null or "q" => new Command.Quit(),
+            "n" => new Command.Next(),
+            "p" => new Command.Previous(),
+            "b" => new Command.Back(),
+            var s when int.TryParse(s, out var id) => new Command.Select(id),
+            _ => null
+        };
     }
 }

@@ -31,17 +31,41 @@ var interpreter = new Interpreter();
 var terminal = new RenderTerminal();
 
 const int PageSize = 20;
-async Task<List<ViewRow.ArtistRow>> LoadArtists(int page) =>
-    await context.Artists
-        .OrderBy(a => a.ArtistId)
-        .Skip(PageSize * (page - 1))
-        .Take(PageSize)
-        .Select(a => new ViewRow.ArtistRow(a.ArtistId, a.Name ?? "N/A"))
+
+//===========================Artist rows===========================
+IQueryable<ViewRow.ArtistRow> artistRows = context.Artists
+    .OrderBy(a => a.ArtistId)
+    .Select(a => new ViewRow.ArtistRow(a.ArtistId, a.Name));
+
+var artistCount = await artistRows.CountAsync(); 
+var lastArtistsPage = Math.Max(1, (int)Math.Ceiling(artistCount / (double)PageSize));
+
+Task<List<ViewRow.ArtistRow>> LoadArtists(int page) =>
+    artistRows.Skip(PageSize * (page - 1)).Take(PageSize).ToListAsync();
+
+//===========================Album rows===========================
+Task<List<ViewRow.AlbumRow>> LoadAlbums(int artistId) =>
+    context.Albums
+        .Where(a => a.ArtistId == artistId)
+        .OrderBy(a => a.Title)
+        .Select(a => new ViewRow.AlbumRow(a.AlbumId, a.Title))
+        .ToListAsync();
+
+//===========================Track rows===========================
+Task<List<ViewRow.TrackRow>> LoadTracks(int albumId) =>
+    context.Tracks
+        .Where(t => t.AlbumId == albumId)
+        .OrderBy(t => t.TrackId)
+        .Select(t => new ViewRow.TrackRow(
+            t.TrackId,
+            t.Name,
+            t.Composer,
+            new Duration(t.Milliseconds)))
         .ToListAsync();
 
 async Task Show(Screen screen)
 {
-    Clear();
+    if (!IsOutputRedirected) Clear();
     switch (screen)
     {
         case Screen.StartScreen:
@@ -49,7 +73,15 @@ async Task Show(Screen screen)
             break;
 
         case Screen.ArtistsScreen s:
-            terminal.Artists(await LoadArtists(s.Page));
+            terminal.Artists(await LoadArtists(s.Page), s.Page, lastArtistsPage);
+            break;
+
+        case Screen.ArtistAlbumsScreen s:
+            terminal.ArtistAlbums(await LoadAlbums(s.ArtistId));
+            break;
+
+        case Screen.AlbumTracksScreen s:
+            terminal.AlbumTracks(await LoadTracks(s.AlbumId));
             break;
     }
 }
@@ -60,10 +92,10 @@ while (true)
 {
     await Show(screen);
 
-    var command = KeyBinding.MakeCommand(ReadKey(intercept: true), selectedId: null);
+    var command = KeyBinding.MakeCommand(ReadLine());
     if (command is null) continue;
 
-    var (signal, next) = interpreter.Apply(screen, command, lastArtistsPage: 5);
+    var (signal, next) = interpreter.Apply(screen, command, lastArtistsPage);
     if (signal == LoopSignal.Exit) break;
 
     screen = next;

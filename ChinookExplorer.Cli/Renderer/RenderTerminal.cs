@@ -10,9 +10,9 @@ namespace ChinookExplorer.Cli.Renderer
     abstract record ViewRow
     {
         private ViewRow() { }
-        public sealed record ArtistRow(int ArtistId, string Name) : ViewRow;
+        public sealed record ArtistRow(int ArtistId, string? Name) : ViewRow;
         public sealed record AlbumRow(int AlbumId, string Title) : ViewRow;
-        public sealed record TrackRow(int TrackId, string Name, string Composer, Duration Duration) : ViewRow;
+        public sealed record TrackRow(int TrackId, string Name, string? Composer, Duration Duration) : ViewRow;
     }
 
     class RenderTerminal
@@ -21,14 +21,14 @@ namespace ChinookExplorer.Cli.Renderer
         {
             WriteLine(tableStart);
 
-            if (rows.Count == 0) { WriteLine("Nothing to show. Press any key to go back."); return; }
+            if (rows.Count == 0) { WriteLine("Nothing to show. Type b to go back."); return; }
 
             var props = typeof(T).GetProperties();
 
             string[] headers = props.Select(p => p.Name).ToArray();
 
             string[][] grid = rows
-                .Select(r => props.Select(p => p.GetValue(r)?.ToString() ?? "").ToArray())
+                .Select(r => props.Select(p => p.GetValue(r)?.ToString() ?? "N/A").ToArray())
                 .ToArray();
 
             int[] widths = headers
@@ -41,12 +41,11 @@ namespace ChinookExplorer.Cli.Renderer
             foreach (var g in grid)
                 WriteLine(string.Join("  ", g.Select((c, i) => c.PadRight(widths[i]))));
 
-            Write(promptAsk + " or press Backspace to go back:");
+            Write(promptAsk);
         }
 
         internal void StartScreen()
         {
-            Clear();
             WriteLine("Chinook Explorer");
             WriteLine("================");
             WriteLine();
@@ -56,13 +55,13 @@ namespace ChinookExplorer.Cli.Renderer
             Write("Write your option: ");
         }
 
-        internal void Artists(IReadOnlyList<ViewRow.ArtistRow> artists) => 
-            Table(artists, "Artists", "Write your option");
+        internal void Artists(IReadOnlyList<ViewRow.ArtistRow> artists, int pageNumber, int lastPage) =>
+            Table(artists, "Artists", $"PageNumber: {pageNumber}/{lastPage}\n\nArtistId to open | n next page | p previous page | b back | q quit: ");
 
-        internal void ArtistAlbums(IReadOnlyList<ViewRow.AlbumRow> albums) => 
-            Table(albums, "Artist's Albums", "Write your option");
+        internal void ArtistAlbums(IReadOnlyList<ViewRow.AlbumRow> albums) =>
+            Table(albums, "Artist's Albums", "\nAlbumId to open | b back | q quit: ");
 
-        internal void AlbumTracks(IReadOnlyList<ViewRow.TrackRow> tracks) => 
-            Table(tracks, "Album Tracks", "Write your option");
+        internal void AlbumTracks(IReadOnlyList<ViewRow.TrackRow> tracks) =>
+            Table(tracks, "Album Tracks", "\nb back | q quit: ");
     }
 }
