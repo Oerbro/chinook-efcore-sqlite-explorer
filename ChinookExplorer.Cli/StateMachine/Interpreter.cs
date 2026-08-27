@@ -15,9 +15,6 @@ namespace ChinookExplorer.Cli.StateMachine
                 (Screen.StartScreen, Command.Select(1)) =>
                     (LoopSignal.Continue, new Screen.ArtistsScreen(1)),
 
-                (Screen.StartScreen, Command.Select(2)) =>
-                    (LoopSignal.Exit, screen),
-
                 (Screen.ArtistsScreen artists, Command.Next)
                     when artists.Page < lastArtistsPage =>
                     (LoopSignal.Continue, artists with { Page = artists.Page + 1 }),

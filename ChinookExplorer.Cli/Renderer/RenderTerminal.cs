@@ -1,6 +1,4 @@
-﻿using static System.Console;
-
-namespace ChinookExplorer.Cli.Renderer
+﻿namespace ChinookExplorer.Cli.Renderer
 {
     readonly record struct Duration(int Ms)
     {
@@ -17,51 +15,43 @@ namespace ChinookExplorer.Cli.Renderer
 
     class RenderTerminal
     {
-        internal void Table<T>(IReadOnlyList<T> rows, string tableStart, string promptAsk) where T : ViewRow
+        internal string Table<T>(IReadOnlyList<T> rows, string tableStart, string promptAsk) where T : ViewRow
         {
-            WriteLine(tableStart);
-
-            if (rows.Count == 0) { WriteLine("Nothing to show. Type b to go back."); return; }
+            if (rows.Count == 0) return $"{tableStart}\nNothing to show.\n\nb back: ";
 
             var props = typeof(T).GetProperties();
+            var headers = props.Select(p => p.Name).ToArray();
+            var grid = rows.Select(r => props.Select(p => p.GetValue(r)?.ToString() ?? "N/A").ToArray()).ToArray();
+            var widths = headers.Select((h, i) => Math.Max(h.Length, grid.Max(g => g[i].Length))).ToArray();
 
-            string[] headers = props.Select(p => p.Name).ToArray();
+            var lines = new[]
+                {
+            tableStart,
+            string.Join("  ", headers.Select((h, i) => h.PadRight(widths[i]))),
+            new string('-', widths.Sum() + 2 * (widths.Length - 1))
+                }
+                .Concat(grid.Select(g => string.Join("  ", g.Select((c, i) => c.PadRight(widths[i])))));
 
-            string[][] grid = rows
-                .Select(r => props.Select(p => p.GetValue(r)?.ToString() ?? "N/A").ToArray())
-                .ToArray();
-
-            int[] widths = headers
-                .Select((h, i) => Math.Max(h.Length, grid.Max(g => g[i].Length)))
-                .ToArray();
-
-            WriteLine(string.Join("  ", headers.Select((h, i) => h.PadRight(widths[i]))));
-            WriteLine(new string('-', widths.Sum() + 2 * (widths.Length - 1)));
-
-            foreach (var g in grid)
-                WriteLine(string.Join("  ", g.Select((c, i) => c.PadRight(widths[i]))));
-
-            Write(promptAsk);
+            return string.Join("\n", lines) + "\n" + promptAsk;
         }
 
-        internal void StartScreen()
+        internal string StartScreen()
         {
-            WriteLine("Chinook Explorer");
-            WriteLine("================");
-            WriteLine();
-            WriteLine("1. List Artists");
-            WriteLine("2. Exit");
-            WriteLine();
-            Write("Write your option: ");
+            return
+                "Chinook Explorer\n" +
+                "================\n\n" +
+                "1 for List Artists\n" +
+                "q to Exit\n\n" +
+                "Write your option: ";
         }
 
-        internal void Artists(IReadOnlyList<ViewRow.ArtistRow> artists, int pageNumber, int lastPage) =>
+        internal string Artists(IReadOnlyList<ViewRow.ArtistRow> artists, int pageNumber, int lastPage) =>
             Table(artists, "Artists", $"PageNumber: {pageNumber}/{lastPage}\n\nArtistId to open | n next page | p previous page | b back | q quit: ");
 
-        internal void ArtistAlbums(IReadOnlyList<ViewRow.AlbumRow> albums) =>
+        internal string ArtistAlbums(IReadOnlyList<ViewRow.AlbumRow> albums) =>
             Table(albums, "Artist's Albums", "\nAlbumId to open | b back | q quit: ");
 
-        internal void AlbumTracks(IReadOnlyList<ViewRow.TrackRow> tracks) =>
+        internal string AlbumTracks(IReadOnlyList<ViewRow.TrackRow> tracks) =>
             Table(tracks, "Album Tracks", "\nb back | q quit: ");
     }
 }

@@ -1,4 +1,4 @@
 ﻿namespace ChinookExplorer.Cli.StateMachine
 {
-    enum LoopSignal { Continue, Exit  };
+    enum LoopSignal { Continue, Exit };
 }

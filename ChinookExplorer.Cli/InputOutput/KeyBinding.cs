@@ -4,9 +4,9 @@ namespace ChinookExplorer.Cli.InputOutput
 {
     static class KeyBinding
     {
-        public static Command? MakeCommand(string? line) => line?.Trim().ToLowerInvariant() switch
+        public static Command? MakeCommand(string line) => line.Trim().ToLowerInvariant() switch
         {
-            null or "q" => new Command.Quit(),
+            "q" => new Command.Quit(),
             "n" => new Command.Next(),
             "p" => new Command.Previous(),
             "b" => new Command.Back(),

@@ -37,7 +37,7 @@ IQueryable<ViewRow.ArtistRow> artistRows = context.Artists
     .OrderBy(a => a.ArtistId)
     .Select(a => new ViewRow.ArtistRow(a.ArtistId, a.Name));
 
-var artistCount = await artistRows.CountAsync(); 
+var artistCount = await artistRows.CountAsync();
 var lastArtistsPage = Math.Max(1, (int)Math.Ceiling(artistCount / (double)PageSize));
 
 Task<List<ViewRow.ArtistRow>> LoadArtists(int page) =>
@@ -63,36 +63,30 @@ Task<List<ViewRow.TrackRow>> LoadTracks(int albumId) =>
             new Duration(t.Milliseconds)))
         .ToListAsync();
 
-async Task Show(Screen screen)
+async Task<string> View(Screen screen) => screen switch
 {
-    if (!IsOutputRedirected) Clear();
-    switch (screen)
-    {
-        case Screen.StartScreen:
-            terminal.StartScreen();
-            break;
-
-        case Screen.ArtistsScreen s:
-            terminal.Artists(await LoadArtists(s.Page), s.Page, lastArtistsPage);
-            break;
-
-        case Screen.ArtistAlbumsScreen s:
-            terminal.ArtistAlbums(await LoadAlbums(s.ArtistId));
-            break;
-
-        case Screen.AlbumTracksScreen s:
-            terminal.AlbumTracks(await LoadTracks(s.AlbumId));
-            break;
-    }
-}
+    Screen.StartScreen => terminal.StartScreen(),
+    Screen.ArtistsScreen s => terminal.Artists(await LoadArtists(s.Page), s.Page, lastArtistsPage),
+    Screen.ArtistAlbumsScreen s => terminal.ArtistAlbums(await LoadAlbums(s.ArtistId)),
+    Screen.AlbumTracksScreen s => terminal.AlbumTracks(await LoadTracks(s.AlbumId)),
+    _ => ""
+};
 
 Screen screen = new Screen.StartScreen();
+Screen? shown = null;
+var view = "";
 
 while (true)
 {
-    await Show(screen);
+    if (!screen.Equals(shown)) { view = await View(screen); shown = screen; }
 
-    var command = KeyBinding.MakeCommand(ReadLine());
+    if (!IsOutputRedirected) Clear();
+    Write(view);
+
+    var line = ReadLine();
+    if (line is null) break;
+
+    var command = KeyBinding.MakeCommand(line);
     if (command is null) continue;
 
     var (signal, next) = interpreter.Apply(screen, command, lastArtistsPage);
