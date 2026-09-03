@@ -1,3 +1,4 @@
+using ChinookExplorer.Cli.Catalog;
 using ChinookExplorer.Cli.InputOutput;
 using ChinookExplorer.Cli.Renderer;
 using ChinookExplorer.Cli.StateMachine;
@@ -30,45 +31,15 @@ await using var context = new ChinookContext(options);
 var interpreter = new Interpreter();
 var terminal = new RenderTerminal();
 
-const int PageSize = 20;
-
-//===========================Artist rows===========================
-IQueryable<ViewRow.ArtistRow> artistRows = context.Artists
-    .OrderBy(a => a.ArtistId)
-    .Select(a => new ViewRow.ArtistRow(a.ArtistId, a.Name));
-
-var artistCount = await artistRows.CountAsync();
-var lastArtistsPage = Math.Max(1, (int)Math.Ceiling(artistCount / (double)PageSize));
-
-Task<List<ViewRow.ArtistRow>> LoadArtists(int page) =>
-    artistRows.Skip(PageSize * (page - 1)).Take(PageSize).ToListAsync();
-
-//===========================Album rows===========================
-Task<List<ViewRow.AlbumRow>> LoadAlbums(int artistId) =>
-    context.Albums
-        .Where(a => a.ArtistId == artistId)
-        .OrderBy(a => a.Title)
-        .Select(a => new ViewRow.AlbumRow(a.AlbumId, a.Title))
-        .ToListAsync();
-
-//===========================Track rows===========================
-Task<List<ViewRow.TrackRow>> LoadTracks(int albumId) =>
-    context.Tracks
-        .Where(t => t.AlbumId == albumId)
-        .OrderBy(t => t.TrackId)
-        .Select(t => new ViewRow.TrackRow(
-            t.TrackId,
-            t.Name,
-            t.Composer,
-            new Duration(t.Milliseconds)))
-        .ToListAsync();
+var catalog = new DataLoader(context);
+var lastArtistsPage = await catalog.LastArtistsPage();
 
 async Task<string> View(Screen screen) => screen switch
 {
     Screen.StartScreen => terminal.StartScreen(),
-    Screen.ArtistsScreen s => terminal.Artists(await LoadArtists(s.Page), s.Page, lastArtistsPage),
-    Screen.ArtistAlbumsScreen s => terminal.ArtistAlbums(await LoadAlbums(s.ArtistId)),
-    Screen.AlbumTracksScreen s => terminal.AlbumTracks(await LoadTracks(s.AlbumId)),
+    Screen.ArtistsScreen s => terminal.Artists(await catalog.LoadArtists(s.Page), s.Page, lastArtistsPage),
+    Screen.ArtistAlbumsScreen s => terminal.ArtistAlbums(await catalog.LoadAlbums(s.ArtistId)),
+    Screen.AlbumTracksScreen s => terminal.AlbumTracks(await catalog.LoadTracks(s.AlbumId)),
     _ => ""
 };
 
