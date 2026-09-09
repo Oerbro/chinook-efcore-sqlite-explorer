@@ -18,4 +18,12 @@
     </PackageReference>
   </ItemGroup>
 
+	<ItemGroup>
+		<None Include="..\database\Chinook_Sqlite.sqlite" Link="database\Chinook_Sqlite.sqlite" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="ChinookExplorer.Tests" />
+	</ItemGroup>
+
 </Project>
