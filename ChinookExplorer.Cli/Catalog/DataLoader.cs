@@ -29,10 +29,10 @@ namespace ChinookExplorer.Cli.Catalog
                 .Select(a => new ViewRow.AlbumRow(a.AlbumId, a.Title))
                 .ToListAsync();
 
-        public Task<List<ViewRow.TrackRow>> LoadTracks(int albumId) =>
+        public Task<List<ViewRow.TrackRow>> LoadTracks(int albumId, int artistId) =>
             context.Tracks
-                .Where(t => t.AlbumId == albumId)
-                .OrderBy(t => t.TrackId)
+                .Where(t => t.AlbumId == albumId && t.Album!.ArtistId == artistId)
+                        .OrderBy(t => t.TrackId)
                 .Select(t => new ViewRow.TrackRow(t.TrackId, t.Name, t.Composer, new Duration(t.Milliseconds)))
                 .ToListAsync();
     }

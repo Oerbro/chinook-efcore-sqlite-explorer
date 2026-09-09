@@ -39,26 +39,29 @@ async Task<string> View(Screen screen) => screen switch
     Screen.StartScreen => terminal.StartScreen(),
     Screen.ArtistsScreen s => terminal.Artists(await catalog.LoadArtists(s.Page), s.Page, lastArtistsPage),
     Screen.ArtistAlbumsScreen s => terminal.ArtistAlbums(await catalog.LoadAlbums(s.ArtistId)),
-    Screen.AlbumTracksScreen s => terminal.AlbumTracks(await catalog.LoadTracks(s.AlbumId)),
+    Screen.AlbumTracksScreen s => terminal.AlbumTracks(await catalog.LoadTracks(s.AlbumId, s.ArtistId)),
     _ => ""
 };
 
 Screen screen = new Screen.StartScreen();
 Screen? shown = null;
 var view = "";
+string? message = null;
 
 while (true)
 {
     if (!screen.Equals(shown)) { view = await View(screen); shown = screen; }
 
     if (!IsOutputRedirected) Clear();
+    if (message is not null) Write($"{message}\n\n");
     Write(view);
+    message = null;
 
     var line = ReadLine();
     if (line is null) break;
 
     var command = KeyBinding.MakeCommand(line);
-    if (command is null) continue;
+    if (command is null) { message = $"Not a valid input: {line}"; continue; };
 
     var (signal, next) = interpreter.Apply(screen, command, lastArtistsPage);
     if (signal == LoopSignal.Exit) break;
