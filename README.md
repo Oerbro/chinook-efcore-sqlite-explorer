@@ -20,7 +20,7 @@ ArtistId  Name
 ...
 PageNumber: 1/14
 
-ArtistId to open | n next page | p previous page | b back | q quit: 1
+Any ArtistId to open | n next page | p previous page | b back | q quit: 1
 
 Artist's Albums
 AlbumId  Title
@@ -28,7 +28,7 @@ AlbumId  Title
 1        For Those About To Rock We Salute You
 4        Let There Be Rock
 
-AlbumId to open | b back | q quit: 1
+AlbumId for this artist to open | b back | q quit: 1
 
 Album Tracks
 TrackId  Name                                     Composer                                   Duration
@@ -49,6 +49,8 @@ Three decisions the code is organised around:
   `ArtistsScreen`, `ArtistAlbumsScreen`, `AlbumTracksScreen`) and every recognised line of input maps to a `Command`.
   `Interpreter.Apply` is a single pattern match from `(Screen, Command)` to the next screen — pure, with no
   I/O and no database access, so the whole navigation model can be unit tested without a database.
+  The application loop validates selected IDs against the database before calling the interpreter,
+  keeping database access outside the navigation state machine.
 - **Screens carry the context needed to go back.** `AlbumTracksScreen` holds the `ArtistId` and the
   `ArtistsPage` it was reached from, so `b` returns you to the page you left rather than to page one.
   No navigation stack required.
@@ -87,7 +89,9 @@ Type a command and press <kbd>Enter</kbd>.
 | `b`    | Back one level            | Artists, Albums, Tracks |
 | `q`    | Quit                      | All screens             |
 
-Artists are paged 20 rows at a time. Unrecognised input is reported above the screen; commands that don't apply to the current screen are silently ignored.
+Artists are paged 20 rows at a time, but you can open any existing artist ID, including one on another page. Album IDs must belong to the current artist. IDs are checked against the database before navigating; a missing or out-of-scope ID displays a message and leaves you on the current screen. "Nothing to show" means a valid selection returned an empty list, such as an artist with no albums.
+
+Unrecognised input is reported above the screen; commands that don't apply to the current screen are silently ignored.
 
 ## Project structure
 

@@ -17,7 +17,7 @@
     {
         internal string Table<T>(IReadOnlyList<T> rows, string tableStart, string promptAsk) where T : ViewRow
         {
-            if (rows.Count == 0) return $"{tableStart}\nNothing to show.\n\nb back: ";
+            if (rows.Count == 0) return $"{tableStart}\nNothing to show.\n\n{promptAsk}";
 
             var props = typeof(T).GetProperties();
             var headers = props.Select(p => p.Name).ToArray();
@@ -46,10 +46,10 @@
         }
 
         internal string Artists(IReadOnlyList<ViewRow.ArtistRow> artists, int pageNumber, int lastPage) =>
-            Table(artists, "Artists", $"PageNumber: {pageNumber}/{lastPage}\n\nArtistId to open | n next page | p previous page | b back | q quit: ");
+            Table(artists, "Artists", $"PageNumber: {pageNumber}/{lastPage}\n\nAny ArtistId to open | n next page | p previous page | b back | q quit: ");
 
         internal string ArtistAlbums(IReadOnlyList<ViewRow.AlbumRow> albums) =>
-            Table(albums, "Artist's Albums", "\nAlbumId to open | b back | q quit: ");
+            Table(albums, "Artist's Albums", "\nAlbumId for this artist to open | b back | q quit: ");
 
         internal string AlbumTracks(IReadOnlyList<ViewRow.TrackRow> tracks) =>
             Table(tracks, "Album Tracks", "\nb back | q quit: ");

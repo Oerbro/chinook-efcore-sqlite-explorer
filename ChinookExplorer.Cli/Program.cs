@@ -34,18 +34,29 @@ var terminal = new RenderTerminal();
 var catalog = new DataLoader(context);
 var lastArtistsPage = await catalog.LastArtistsPage();
 
-async Task<string> View(Screen screen) => screen switch
+async Task<string?> View(Screen screen) => screen switch
 {
     Screen.StartScreen => terminal.StartScreen(),
     Screen.ArtistsScreen s => terminal.Artists(await catalog.LoadArtists(s.Page), s.Page, lastArtistsPage),
     Screen.ArtistAlbumsScreen s => terminal.ArtistAlbums(await catalog.LoadAlbums(s.ArtistId)),
     Screen.AlbumTracksScreen s => terminal.AlbumTracks(await catalog.LoadTracks(s.AlbumId, s.ArtistId)),
-    _ => ""
+    _ => null
+};
+
+async Task<string?> MessageIfNonExistent(Screen screen, Command command) => (screen, command) switch
+{
+    (Screen.ArtistsScreen, Command.Select(var id)) =>
+        await catalog.ArtistExists(id) ? null : $"Artist ID {id} does not exist.",
+    (Screen.ArtistAlbumsScreen artist, Command.Select(var id)) =>
+        await catalog.AlbumExists(id, artist.ArtistId)
+            ? null
+            : $"Album ID {id} does not exist for artist ID {artist.ArtistId}.",
+    _ => null
 };
 
 Screen screen = new Screen.StartScreen();
 Screen? shown = null;
-var view = "";
+string? view = null;
 string? message = null;
 
 while (true)
@@ -62,6 +73,9 @@ while (true)
 
     var command = KeyBinding.MakeCommand(line);
     if (command is null) { message = $"Not a valid input: {line}"; continue; };
+
+    message = await MessageIfNonExistent(screen, command);
+    if (message is not null) continue;
 
     var (signal, next) = interpreter.Apply(screen, command, lastArtistsPage);
     if (signal == LoopSignal.Exit) break;
