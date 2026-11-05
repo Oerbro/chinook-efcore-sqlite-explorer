@@ -14,6 +14,12 @@ namespace ChinookExplorer.Cli.Catalog
         public async Task<int> LastArtistsPage() =>
             LastPage(await context.Artists.CountAsync());
 
+        public Task<bool> ArtistExists(int artistId) =>
+            context.Artists.AnyAsync(a => a.ArtistId == artistId);
+
+        public Task<bool> AlbumExists(int albumId, int artistId) =>
+            context.Albums.AnyAsync(a => a.AlbumId == albumId && a.ArtistId == artistId);
+
         public Task<List<ViewRow.ArtistRow>> LoadArtists(int page) =>
             context.Artists
                 .OrderBy(a => a.ArtistId)
